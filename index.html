@@ -1,0 +1,205 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8" />
+    <title>Making your first Phaser 3 Game - Part 10</title>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.js"></script>
+    <style type="text/css">
+        @font-face {
+            font-family: kenneyBold;
+            src: url(fonts/kenney_bold.ttf);
+        }
+
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+var config = {
+    type: Phaser.AUTO,
+    width: 800,
+    height: 800,
+    physics: {
+       default: 'arcade',
+       arcade: {
+           gravity: { y: 0 },
+           debug: false
+       }
+    },
+    scene: {
+        preload: preload,
+        create: create,
+        update: update
+    }
+};
+
+// var player;
+// var stars;
+// var bombs;
+// var platforms;
+var cursors;
+// var score = 0;
+// var gameOver = false;
+// var scoreText;
+var pig;
+var pig_v = 100;
+var pig_vx = 0;
+var pig_vy = 0;
+var pig_dead = false;
+var pig_points = 0;
+var beet;
+var points_text;
+
+var game = new Phaser.Game(config);
+
+function preload ()
+{
+    this.load.image('beetroot', 'images/beetroot.png');
+    this.load.image('bg', 'images/bg.png');
+    this.load.image('pig_dead', 'images/pig_dead.png');
+    this.load.image('pig_down', 'images/pig_down.png');
+    this.load.image('pig_left', 'images/pig_left.png');
+    this.load.image('pig_right', 'images/pig_right.png');
+    this.load.image('pig_up', 'images/pig_up.png');
+}
+
+function create ()
+{
+    this.add.image(400, 400, 'bg');
+
+    pig = this.physics.add.image(400, 400, "pig_down");
+    // pig.setCollideWorldBounds(true);
+
+    beet = this.physics.add.image(200, 200, "beetroot");
+
+    this.physics.add.overlap(pig, beet, collectBeet, null, this);
+
+    points_text = this.add.text(400, 50, '0', { fontSize: '60pt', fill: '#fdee00'}).setOrigin(0.5);
+
+    //  The platforms group contains the ground and the 2 ledges we can jump on
+    //platforms = this.physics.add.staticGroup();
+
+    //  Here we create the ground.
+    //  Scale it to fit the width of the game (the original sprite is 400x32 in size)
+    //platforms.create(400, 568, 'ground').setScale(2).refreshBody();
+
+    //  Now let's create some ledges
+    //platforms.create(600, 400, 'ground');
+    //platforms.create(50, 250, 'ground');
+    //platforms.create(750, 220, 'ground');
+
+    // The player and its settings
+    //player = this.physics.add.sprite(100, 450, 'dude');
+
+    //  Player physics properties. Give the little guy a slight bounce.
+    //player.setBounce(0.2);
+    //player.setCollideWorldBounds(true);
+
+    //  Our player animations, turning, walking left and walking right.
+    //this.anims.create({
+    //    key: 'left',
+    //    frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
+    //    frameRate: 10,
+    //    repeat: -1
+    //});
+
+    // this.anims.create({
+    //     key: 'turn',
+    //     frames: [ { key: 'dude', frame: 4 } ],
+    //     frameRate: 20
+    // });
+
+    // this.anims.create({
+    //     key: 'right',
+    //     frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
+    //     frameRate: 10,
+    //     repeat: -1
+    // });
+
+    //  Input Events
+    cursors = this.input.keyboard.createCursorKeys();
+
+    //  Some stars to collect, 12 in total, evenly spaced 70 pixels apart along the x axis
+    // stars = this.physics.add.group({
+    //     key: 'star',
+    //     repeat: 11,
+    //     setXY: { x: 12, y: 0, stepX: 70 }
+    // });
+
+    // stars.children.iterate(function (child) {
+
+    //     //  Give each star a slightly different bounce
+    //     child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+
+    // });
+
+    // bombs = this.physics.add.group();
+
+    //  The score
+    // scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
+
+
+}
+
+function update ()
+{
+    if (pig_dead)
+    {
+        if (cursors.space.isDown) {
+            pig.setTexture("pig_down");
+            pig_dead = false;
+            pig_v = 100;
+            pig_points = 0;
+        }
+        return;
+    }
+
+    if (cursors.left.isDown) {
+        pig_vx = -1;
+        pig_vy = 0; 
+        pig.setTexture("pig_left");
+    } else if (cursors.right.isDown) {
+        pig_vx = 1;
+        pig_vy = 0; 
+        pig.setTexture("pig_right");
+    } else if (cursors.up.isDown) {
+        pig_vx = 0;
+        pig_vy = -1; 
+        pig.setTexture("pig_up");
+    } else if (cursors.down.isDown) {
+        pig_vx = 0;
+        pig_vy = 1;
+        pig.setTexture("pig_down");
+    }
+
+    pig.setVelocityX(pig_vx * pig_v);
+    pig.setVelocityY(pig_vy * pig_v);
+
+    if (!Phaser.Geom.Rectangle.Overlaps(this.physics.world.bounds, pig.getBounds())) {
+        pig.setVelocityX(0);
+        pig.setVelocityY(0);
+        pig.x = 400;
+        pig.y = 400;
+        pig_vx = 0;
+        pig_vy = 0;
+        pig_dead = true;
+        pig.setTexture("pig_dead");
+    }
+}
+
+function collectBeet(pig, beet) {
+    beet.x = Phaser.Math.Between(50, 750);
+    beet.y = Phaser.Math.Between(50, 750);
+    pig_v += 50;
+    pig_points += 1;
+    points_text.setText(pig_points.toString());
+}
+
+</script>
+
+</body>
+</html>
